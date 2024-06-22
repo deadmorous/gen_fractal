@@ -17,11 +17,21 @@ public:
         FractalGeneratorObject* fractalGeneratorObject,
         QWidget* parent = nullptr);
 
+public slots:
+    auto setSelectedPointCoords(double x, double y) -> void;
+
+signals:
+    auto pointSelected(double x, double y) -> void;
+    auto pointDeselected() -> void;
+
 protected:
     auto mouseMoveEvent(QMouseEvent* event)
         -> void override;
 
     auto mousePressEvent(QMouseEvent* event)
+        -> void override;
+
+    auto mouseReleaseEvent(QMouseEvent* event)
         -> void override;
 
 private:

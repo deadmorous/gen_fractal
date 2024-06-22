@@ -56,9 +56,9 @@ public:
         setPen(QPen(Qt::black));
         setBrush(Qt::gray);
         setFlags(
-            QGraphicsItem::ItemIsMovable /*|
+            QGraphicsItem::ItemIsMovable |
             QGraphicsItem::ItemIsFocusable |
-            QGraphicsItem::ItemIsSelectable*/ );
+            QGraphicsItem::ItemIsSelectable );
         setZValue(1);
     }
 
@@ -78,12 +78,8 @@ public:
         -> void
     { lines_.after = line; }
 
-protected:
-    auto mouseMoveEvent(QGraphicsSceneMouseEvent *event)
-        -> void override
+    auto update()
     {
-        QGraphicsRectItem::mouseMoveEvent(event);
-
         auto p = rect().center() + pos();
 
         if (lines_.before)
@@ -104,8 +100,16 @@ protected:
             onPosChanged_();
     }
 
+protected:
+    auto mouseMoveEvent(QGraphicsSceneMouseEvent *event)
+        -> void override
+    {
+        QGraphicsRectItem::mouseMoveEvent(event);
+        update();
+    }
+
 private:
-    static constexpr auto size = 8.;
+    static constexpr auto size = 10.;
 
     static auto rectFromCenter(const Vec2d& pos)
         -> QRectF
@@ -260,6 +264,9 @@ struct FractalGeneratorView::Impl
     auto handleMousePressEvent(QMouseEvent* event)
         -> void
     {
+        emit view_->pointDeselected();
+        currentHandle_ = nullptr;
+
         auto scenePos = view_->mapToScene(event->pos());
         auto* handleItem =
             dynamic_cast<HandleItem*>(scene_.itemAt(scenePos, {}));
@@ -272,6 +279,24 @@ struct FractalGeneratorView::Impl
         }
         else
             addVertex(toVec2d(scenePos));
+    }
+
+    auto handleMouseReleaseEvent(QMouseEvent* event)
+        -> void
+    {
+        if (!currentHandle_)
+            currentHandle_ =
+                dynamic_cast<HandleItem*>(scene_.mouseGrabberItem());
+
+        view_->QGraphicsView::mouseReleaseEvent(event);
+
+        if (currentHandle_)
+        {
+            auto pos = currentHandle_->pos() + currentHandle_->rect().center();
+            emit view_->pointSelected(pos.x(), pos.y());
+        }
+        else
+            emit view_->pointDeselected();
     }
 
     auto addVertex(const Vec2d& v)
@@ -300,6 +325,11 @@ struct FractalGeneratorView::Impl
 
         fg.insert(fg.begin() + lineIndex+1, v);
         fractalGeneratorObject_->setFractalGenerator(fg);
+
+        currentHandle_ = newHandle;
+        for (auto* h: handles_)
+            h->setSelected(h == currentHandle_);
+        emit view_->pointSelected(v[0], v[1]);
     }
 
     auto removeVertex(HandleItem* handleItem)
@@ -343,12 +373,22 @@ struct FractalGeneratorView::Impl
         fractalGeneratorObject_->setFractalGenerator(fg);
     }
 
+    auto setSelectedPointCoords(double x, double y) -> void
+    {
+        if (!currentHandle_)
+            return;
+        auto newPos = QPointF{x, y} - currentHandle_->rect().center();
+        currentHandle_->setPos(newPos);
+        currentHandle_->update();
+    }
+
     FractalGeneratorView* view_;
     FractalGeneratorObject* fractalGeneratorObject_;
     QGraphicsScene scene_;
 
     std::vector<QGraphicsLineItem*> lines_;
     std::vector<HandleItem*> handles_;
+    HandleItem* currentHandle_{};
 };
 
 FractalGeneratorView::~FractalGeneratorView() = default;
@@ -358,7 +398,9 @@ FractalGeneratorView::FractalGeneratorView(
         QWidget* parent) :
     QGraphicsView{ parent },
     impl_{ std::make_unique<Impl>(this, fractalGeneratorObject) }
-{}
+{
+    setMinimumSize(300, 300);
+}
 
 auto FractalGeneratorView::mouseMoveEvent(QMouseEvent *event)
     -> void
@@ -367,3 +409,11 @@ auto FractalGeneratorView::mouseMoveEvent(QMouseEvent *event)
 auto FractalGeneratorView::mousePressEvent(QMouseEvent* event)
     -> void
 { impl_->handleMousePressEvent(event); }
+
+auto FractalGeneratorView::setSelectedPointCoords(double x, double y)
+    -> void
+{ impl_->setSelectedPointCoords(x, y); }
+
+auto FractalGeneratorView::mouseReleaseEvent(QMouseEvent* event)
+    -> void
+{ impl_->handleMouseReleaseEvent(event); }

@@ -14,6 +14,17 @@ public:
         FractalGeneratorObject* fractalGenerator,
         QWidget *parent = nullptr);
 
+    auto generations() const noexcept -> int;
+    auto antialiasing() const noexcept -> bool;
+    auto advancedPen() const noexcept -> bool;
+    auto allGenerations() const noexcept -> bool;
+
+public slots:
+    auto setGenerations(int generations) -> void;
+    auto setAntialiasing(bool enabled) -> void;
+    auto setAdvancedPen(bool enabled) -> void;
+    auto setAllGenerations(bool enabled) -> void;
+
 protected:
     auto paintEvent(QPaintEvent *event)
         -> void override;
@@ -31,4 +42,8 @@ private:
         -> std::vector<Vec2d>;
 
     FractalGeneratorObject* fractalGenerator_;
+    int generations_{5};
+    bool antialiasing_{true};
+    bool advancedPen_{true};
+    bool allGenerations_{true};
 };

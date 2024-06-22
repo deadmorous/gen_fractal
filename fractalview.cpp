@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QPainterPath>
 
+#include <chrono>
 #include <numbers>
 
 namespace {
@@ -19,6 +20,16 @@ auto polylineBbox(std::span<const Vec2d> polyline)
         result << v;
 
     return result;
+}
+
+auto reportTime(std::chrono::steady_clock::time_point t1,
+                std::chrono::steady_clock::time_point t2,
+                std::string_view message)
+    -> void
+{
+    // auto msec =
+    //     std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count();
+    // qDebug() << message << ": " << static_cast<double>(msec) / 1000 << " s";
 }
 
 } // anonymous namespace
@@ -47,13 +58,13 @@ auto FractalView::paintEvent(QPaintEvent *event)
     if (fg.size() < 2)
         return;
 
+    using clock = std::chrono::steady_clock;
+    auto time_0 = clock::now();
+
     auto fs = std::vector<std::vector<Vec2d>>{};
     fs.push_back({ {0., 0.}, {1., 0.} });
-    size_t ngen = 5;
-    for (size_t gen=0; gen<ngen; ++gen)
+    for (size_t gen=0; gen<generations_; ++gen)
         fs.push_back(nextGen(fs.back(), fg));
-
-    p.setRenderHint(QPainter::Antialiasing);
 
     {
         auto bb = Bbox2d {};
@@ -78,18 +89,29 @@ auto FractalView::paintEvent(QPaintEvent *event)
             .translate(-c_bb[0], -c_bb[1]);
         p.setTransform(t);
     }
+    auto time_1 = clock::now();
+    reportTime(time_0, time_1, "Computing fractal");
 
-    size_t gen = 0;
-    for (const auto& f: fs)
+    if (antialiasing_)
+        p.setRenderHint(QPainter::Antialiasing);
+
+    size_t gen = allGenerations_? 0: generations_;
+    for (; gen<=generations_; ++gen)
     {
-        auto width = double(1 << (ngen-gen));
-        auto hue = static_cast<double>(gen) / (ngen+1);
-        auto alpha = static_cast<double>(gen+1) / (ngen+1);
-        auto color = QColor::fromHsvF(hue, 0.8, 0.8, alpha);
-        auto pen = QPen{ color, width };
+        const auto& f = fs[gen];
+        auto pen = QPen{};
+        if (advancedPen_)
+        {
+            auto width = double(1 << (generations_-gen));
+            auto hue = static_cast<double>(gen) / (generations_+1);
+            auto alpha = static_cast<double>(gen+1) / (generations_+1);
+            auto color = QColor::fromHsvF(hue, 0.8, 0.8, alpha);
+            pen = QPen{ color, width };
+        }
         drawPolyLine(p, f, pen);
-        ++gen;
     }
+    auto time_2 = clock::now();
+    reportTime(time_1, time_2, "Drawing fractal");
 }
 
 auto FractalView::drawPolyLine(QPainter& painter,
@@ -152,4 +174,58 @@ auto FractalView::nextGen(std::span<const Vec2d> base,
     }
 
     return result;
+}
+
+auto FractalView::generations() const noexcept
+    -> int
+{ return generations_; }
+
+auto FractalView::antialiasing() const noexcept
+    -> bool
+{ return antialiasing_; }
+
+auto FractalView::advancedPen() const noexcept
+    -> bool
+{ return advancedPen_; }
+
+auto FractalView::allGenerations() const noexcept
+    -> bool
+{ return allGenerations_; }
+
+auto FractalView::setGenerations(int generations)
+    -> void
+{
+    if (generations_ == generations)
+        return;
+
+    generations_ = generations;
+    update();
+}
+
+auto FractalView::setAntialiasing(bool enabled)
+    -> void
+{
+    if (antialiasing_ == enabled)
+        return;
+
+    antialiasing_ = enabled;
+    update();
+}
+
+auto FractalView::setAdvancedPen(bool enabled) -> void
+{
+    if (advancedPen_ == enabled)
+        return;
+
+    advancedPen_ = enabled;
+    update();
+}
+
+auto FractalView::setAllGenerations(bool enabled) -> void
+{
+    if (allGenerations_ == enabled)
+        return;
+
+    allGenerations_ = enabled;
+    update();
 }

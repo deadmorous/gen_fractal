@@ -1,24 +1,12 @@
 #include "controlsdialog.h"
 #include "ui_controlsdialog.h"
 
-class ScopedTrue
-{
-public:
-    ScopedTrue(bool& b) : b_{b}
-    { b = true; }
-
-    ~ScopedTrue() { b_ = false; }
-private:
-    bool& b_;
-};
+#include "scoped_true.hpp"
 
 ControlsDialog::ControlsDialog(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::ControlsDialog)
-{
-    ui->setupUi(this);
-    auto* doubleValidator = new QDoubleValidator(this);
-}
+{ ui->setupUi(this); }
 
 ControlsDialog::~ControlsDialog()
 {

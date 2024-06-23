@@ -34,6 +34,10 @@ protected:
     auto mouseReleaseEvent(QMouseEvent* event)
         -> void override;
 
+private slots:
+    auto onFractalGeneratorChanged()
+        -> void;
+
 private:
 
     struct Impl;

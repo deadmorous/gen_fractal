@@ -1,4 +1,6 @@
 #include "fractalgeneratorview.h"
+
+#include "scoped_true.hpp"
 #include "vec2_qt.hpp"
 
 #include <QGraphicsItem>
@@ -139,6 +141,12 @@ struct FractalGeneratorView::Impl
         view->setRenderHints(QPainter::Antialiasing);
         view->setMouseTracking(true);
         view->setMinimumWidth(300);
+
+        connect(
+            fractalGeneratorObject_,
+            &FractalGeneratorObject::fractalGeneratorChanged,
+            view_,
+            &FractalGeneratorView::onFractalGeneratorChanged);
     }
 
     static auto makeLineItem(const Vec2d& v1, const Vec2d& v2)
@@ -324,6 +332,8 @@ struct FractalGeneratorView::Impl
         handles_.insert(handles_.begin() + lineIndex+1, newHandle);
 
         fg.insert(fg.begin() + lineIndex+1, v);
+
+        auto scoped_true = ScopedTrue{ changingFractalGenerator_ };
         fractalGeneratorObject_->setFractalGenerator(fg);
 
         currentHandle_ = newHandle;
@@ -357,6 +367,7 @@ struct FractalGeneratorView::Impl
 
         handles_[index]->setLineBefore(lineItem);
 
+        auto scoped_true = ScopedTrue{ changingFractalGenerator_ };
         fractalGeneratorObject_->setFractalGenerator(fg);
     }
 
@@ -370,6 +381,8 @@ struct FractalGeneratorView::Impl
             auto* h = handles_[index];
             fg[index] = toVec2d(h->rect().center() + h->pos());
         }
+
+        auto scoped_true = ScopedTrue{ changingFractalGenerator_ };
         fractalGeneratorObject_->setFractalGenerator(fg);
     }
 
@@ -377,9 +390,20 @@ struct FractalGeneratorView::Impl
     {
         if (!currentHandle_)
             return;
+
         auto newPos = QPointF{x, y} - currentHandle_->rect().center();
         currentHandle_->setPos(newPos);
         currentHandle_->update();
+    }
+
+    auto onFractalGeneratorChanged()
+        -> void
+    {
+        if (changingFractalGenerator_)
+            return;
+        auto scoped_true = ScopedTrue{ changingFractalGenerator_ };
+
+        makeScene();
     }
 
     FractalGeneratorView* view_;
@@ -389,6 +413,8 @@ struct FractalGeneratorView::Impl
     std::vector<QGraphicsLineItem*> lines_;
     std::vector<HandleItem*> handles_;
     HandleItem* currentHandle_{};
+
+    bool changingFractalGenerator_{false};
 };
 
 FractalGeneratorView::~FractalGeneratorView() = default;
@@ -417,3 +443,7 @@ auto FractalGeneratorView::setSelectedPointCoords(double x, double y)
 auto FractalGeneratorView::mouseReleaseEvent(QMouseEvent* event)
     -> void
 { impl_->handleMouseReleaseEvent(event); }
+
+auto FractalGeneratorView::onFractalGeneratorChanged()
+    -> void
+{ impl_->onFractalGeneratorChanged(); }

@@ -20,7 +20,10 @@ class FractalGeneratorObject : public QObject
         FINAL)
 
 public:
-    using QObject::QObject;
+    FractalGeneratorObject(QObject* parent = nullptr):
+        QObject{ parent },
+        fractalGenerator_{ {0., 0.}, {100., 0.} }
+    {}
 
     auto fractalGenerator() const
         -> const FractalGenerator&

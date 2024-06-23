@@ -63,7 +63,7 @@
      <item row="2" column="0">
       <widget class="QLabel" name="label_pen">
        <property name="text">
-        <string>Advanced &amp;pen</string>
+        <string>Fancy &amp;pen</string>
        </property>
        <property name="buddy">
         <cstring>checkPen</cstring>

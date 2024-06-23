@@ -286,7 +286,8 @@ struct FractalGeneratorView::Impl
                 view_->QGraphicsView::mousePressEvent(event);
         }
         else
-            addVertex(toVec2d(scenePos));
+            addVertex(toVec2d(scenePos),
+                      (event->modifiers() & Qt::ShiftModifier) != 0);
     }
 
     auto handleMouseReleaseEvent(QMouseEvent* event)
@@ -307,7 +308,7 @@ struct FractalGeneratorView::Impl
             emit view_->pointDeselected();
     }
 
-    auto addVertex(const Vec2d& v)
+    auto addVertex(Vec2d v, bool inTheMiddle)
         -> void
     {
         auto lineIndex = closestLine(v);
@@ -318,6 +319,10 @@ struct FractalGeneratorView::Impl
 
         auto* lineItemBefore = lines_[lineIndex];
         auto lineBefore = lineItemBefore->line();
+
+        if (inTheMiddle)
+            v = toVec2d((lineBefore.p1() + lineBefore.p2()) / 2);
+
         lineBefore.setP2(toQPointF(v));
         lineItemBefore->setLine(lineBefore);
 

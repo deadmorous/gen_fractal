@@ -16,6 +16,28 @@ namespace detail {
 
 constexpr inline struct EndIterTag final {} EndIter;
 
+struct LengthAndAngle final
+{
+    double length;
+    double angle;
+};
+
+inline auto generatorTransform(const Vec2d& b0,
+                               const LengthAndAngle& baseProp,
+                               const Vec2d& g0,
+                               const LengthAndAngle& genProp)
+    ->QTransform
+{
+    auto scale = baseProp.length / genProp.length;
+    auto angle = baseProp.angle - genProp.angle;
+    return QTransform{}
+        .translate(b0[0], b0[1])
+        .scale(scale, scale)
+        .rotate(angle / std::numbers::pi_v<double> * 180)
+        .translate(-g0[0], -g0[1]);
+
+}
+
 } // namespace detail
 
 
@@ -159,14 +181,9 @@ private:
         }
     };
 
-    struct LengthAndAngle final
-    {
-        double length;
-        double angle;
-    };
 
     static auto lengthAndAngle(const Vec2d& dr) noexcept
-        -> LengthAndAngle
+        -> detail::LengthAndAngle
     { return { dr.norm(), atan2(dr[1], dr[0]) }; }
 
     auto baseState() const
@@ -190,22 +207,15 @@ private:
         [[maybe_unused]]
         auto bsize = base_.size();
 
-        auto baseProp = lengthAndAngle(state.v1 - state.v0);
-        auto scale = baseProp.length / genProp_.length;
-        auto angle = baseProp.angle - genProp_.angle;
-        const auto& g0 = generator_[0];
-        const auto& g1 = generator_[1];
-        auto t = QTransform{};
-        t
-            .translate(state.v0[0], state.v0[1])
-            .scale(scale, scale)
-            .rotate(angle / std::numbers::pi_v<double> * 180)
-            .translate(-g0[0], -g0[1]);
+        auto t = detail::generatorTransform(state.v0,
+                                            lengthAndAngle(state.v1 - state.v0),
+                                            generator_[0],
+                                            genProp_);
         return {
             .begin = generator_.data(),
             .end = generator_.data() + generator_.size() - 1,
             .v0 = state.v0,
-            .v1 = toVec2d(t.map(toQPointF(g1))),
+            .v1 = toVec2d(t.map(toQPointF(generator_[1]))),
             .transform = t
         };
     }
@@ -217,7 +227,7 @@ private:
     bool is_last_{ false };
     bool is_end_{ false };
 
-    LengthAndAngle genProp_;
+    detail::LengthAndAngle genProp_;
 
     Vec2d value_;
 

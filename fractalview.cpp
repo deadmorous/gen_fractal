@@ -1,13 +1,13 @@
 #include "fractalview.h"
 
 #include "bbox2.hpp"
+#include "fractal_iter.hpp"
 #include "vec2_qt.hpp"
 
 #include <QPainter>
 #include <QPainterPath>
 
 #include <chrono>
-#include <numbers>
 
 namespace {
 
@@ -27,9 +27,32 @@ auto reportTime(std::chrono::steady_clock::time_point t1,
                 std::string_view message)
     -> void
 {
-    // auto msec =
-    //     std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count();
-    // qDebug() << message << ": " << static_cast<double>(msec) / 1000 << " s";
+    auto msec =
+        std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count();
+    qDebug() << message << ": " << static_cast<double>(msec) / 1000 << " s";
+}
+
+template <typename Range>
+auto drawPolyLine(QPainter& painter,
+                  const Range& polyline,
+                  QPen pen)
+    -> void
+{
+    auto path =
+        QPainterPath{};
+
+    auto it = polyline.begin();
+    auto end = polyline.end();
+
+    assert(it != end);
+
+    path.moveTo(toQPointF(*it));
+
+    for (++it; it!=end; ++it)
+        path.lineTo(toQPointF(*it));
+
+    pen.setCosmetic(true);
+    painter.strokePath(path, pen);
 }
 
 } // anonymous namespace
@@ -61,15 +84,15 @@ auto FractalView::paintEvent(QPaintEvent *event)
     using clock = std::chrono::steady_clock;
     auto time_0 = clock::now();
 
-    auto fs = std::vector<std::vector<Vec2d>>{};
-    fs.push_back({ {0., 0.}, {1., 0.} });
-    for (size_t gen=0; gen<generations_; ++gen)
-        fs.push_back(nextGen(fs.back(), fg));
+    auto base = std::vector<Vec2d>{ {0., 0.}, {1., 0.} };
+
+    auto fseq = [&](size_t gen)
+    { return fractalSeq<FractalNGen>( base, fg, gen ); };
 
     {
         auto bb = Bbox2d {};
-        for (const auto& f: fs)
-            bb << polylineBbox(f);
+        for (const auto& v: fseq(generations_))
+            bb << v;
 
         auto c_bb = bb.center();
         auto bb_margin = 0.55 * bb.size();
@@ -98,7 +121,6 @@ auto FractalView::paintEvent(QPaintEvent *event)
     size_t gen = allGenerations_? 0: generations_;
     for (; gen<=generations_; ++gen)
     {
-        const auto& f = fs[gen];
         auto pen = QPen{};
         if (advancedPen_)
         {
@@ -108,76 +130,14 @@ auto FractalView::paintEvent(QPaintEvent *event)
             auto color = QColor::fromHsvF(hue, 0.8, 0.8, alpha);
             pen = QPen{ color, width };
         }
-        drawPolyLine(p, f, pen);
+        drawPolyLine(p, fseq(gen), pen);
     }
     auto time_2 = clock::now();
     reportTime(time_1, time_2, "Drawing fractal");
 }
 
-auto FractalView::drawPolyLine(QPainter& painter,
-                               std::span<const Vec2d> polyline,
-                               QPen pen)
-    -> void
-{
-    auto path =
-        QPainterPath{};
-
-    path.moveTo(toQPointF(polyline[0]));
-    for (size_t index=1, n=polyline.size(); index<n; ++index)
-        path.lineTo(toQPointF(polyline[index]));
-
-    pen.setCosmetic(true);
-    painter.strokePath(path, pen);
-}
-
-auto FractalView::nextGen(std::span<const Vec2d> base,
-                          std::span<const Vec2d> gen)
-    -> std::vector<Vec2d>
-{
-    Q_ASSERT(base.size() > 1);
-    Q_ASSERT(gen.size() > 1);
-
-    auto nbase = base.size() - 1;
-    auto ngen = gen.size() - 1;
-
-    auto result = std::vector<Vec2d>{};
-    result.reserve(nbase * ngen + 1);
-
-    result.push_back(base[0]);
-
-    const auto& g1 = gen.front();
-    auto dr_gen = gen.back() - g1;
-    auto length_gen = dr_gen.norm();
-    auto angle_gen = atan2(dr_gen[1], dr_gen[0]);
-
-    for (size_t ibase=0; ibase<nbase; ++ibase)
-    {
-        auto b1 = base[ibase];
-        auto b2 = base[ibase+1];
-        auto dr_base = b2 - b1;
-        auto length_base = dr_base.norm();
-        auto angle_base = atan2(dr_base[1], dr_base[0]);
-        auto scale = length_base / length_gen;
-        auto angle = angle_base - angle_gen;
-        auto t = QTransform{};
-        t
-            .translate(b1[0], b1[1])
-            .scale(scale, scale)
-            .rotate(angle / std::numbers::pi_v<double> * 180)
-            .translate(-g1[0], -g1[1]);
-
-        for (size_t igen=1; igen<=ngen; ++igen)
-        {
-            auto r = t.map(toQPointF(gen[igen]));
-            result.push_back(toVec2d(r));
-        }
-    }
-
-    return result;
-}
-
 auto FractalView::generations() const noexcept
-    -> int
+    -> size_t
 { return generations_; }
 
 auto FractalView::antialiasing() const noexcept
@@ -192,7 +152,7 @@ auto FractalView::allGenerations() const noexcept
     -> bool
 { return allGenerations_; }
 
-auto FractalView::setGenerations(int generations)
+auto FractalView::setGenerations(size_t generations)
     -> void
 {
     if (generations_ == generations)

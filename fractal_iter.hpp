@@ -7,7 +7,6 @@
 
 #include <cassert>
 #include <iterator>
-#include <numbers>
 // #include <ranges>
 #include <span>
 #include <vector>
@@ -16,26 +15,20 @@ namespace detail {
 
 constexpr inline struct EndIterTag final {} EndIter;
 
-struct LengthAndAngle final
-{
-    double length;
-    double angle;
-};
-
 inline auto generatorTransform(const Vec2d& b0,
-                               const LengthAndAngle& baseProp,
+                               const Vec2d& b1,
                                const Vec2d& g0,
-                               const LengthAndAngle& genProp)
+                               const Vec2d& g1)
     ->QTransform
 {
-    auto scale = baseProp.length / genProp.length;
-    auto angle = baseProp.angle - genProp.angle;
-    return QTransform{}
-        .translate(b0[0], b0[1])
-        .scale(scale, scale)
-        .rotate(angle / std::numbers::pi_v<double> * 180)
-        .translate(-g0[0], -g0[1]);
-
+    auto b = b1 - b0;
+    auto g = g1 - g0;
+    auto ig2 = 1. / (g * g);
+    auto fc = (b * g) * ig2;
+    auto fs = (b % g) * ig2;
+    auto dx = b0[0] - fc*g0[0] + fs*g0[1];
+    auto dy = b0[1] - fs*g0[0] - fc*g0[1];
+    return QTransform{ fc, -fs, fs, fc, dx, dy };
 }
 
 } // namespace detail
@@ -96,7 +89,6 @@ public:
         base_{ base },
         generator_{ generator },
         generation_{ generation },
-        genProp_{ lengthAndAngle( generator_.back() - generator_.front()) },
         value_{ base.front() }
     {
         assert(base_.size() > 1);
@@ -182,10 +174,6 @@ private:
     };
 
 
-    static auto lengthAndAngle(const Vec2d& dr) noexcept
-        -> detail::LengthAndAngle
-    { return { dr.norm(), atan2(dr[1], dr[0]) }; }
-
     auto baseState() const
         -> GenerationState
     {
@@ -207,10 +195,8 @@ private:
         [[maybe_unused]]
         auto bsize = base_.size();
 
-        auto t = detail::generatorTransform(state.v0,
-                                            lengthAndAngle(state.v1 - state.v0),
-                                            generator_[0],
-                                            genProp_);
+        auto t = detail::generatorTransform(
+            state.v0, state.v1, generator_.front(), generator_.back());
         return {
             .begin = generator_.data(),
             .end = generator_.data() + generator_.size() - 1,
@@ -226,8 +212,6 @@ private:
     size_t ordinal_{};
     bool is_last_{ false };
     bool is_end_{ false };
-
-    detail::LengthAndAngle genProp_;
 
     Vec2d value_;
 

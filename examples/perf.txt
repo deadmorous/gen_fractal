@@ -1,0 +1,57 @@
+
+fir_tree.txt, gen=6, old algorithm
+
+"Computing fractal" :  0.032  s
+"Drawing fractal" :  1.445  s
+"Computing fractal" :  0.041  s
+"Drawing fractal" :  1.41  s
+"Computing fractal" :  0.028  s
+"Drawing fractal" :  1.416  s
+"Computing fractal" :  0.03  s
+"Drawing fractal" :  1.427  s
+"Computing fractal" :  0.028  s
+"Drawing fractal" :  1.405  s
+"Computing fractal" :  0.052  s
+"Drawing fractal" :  1.428  s
+"Computing fractal" :  0.028  s
+
+fir_tree.txt, gen=6, new algorithm
+"Computing fractal" :  0.039  s
+"Drawing fractal" :  1.457  s
+"Computing fractal" :  0.044  s
+"Drawing fractal" :  1.463  s
+"Computing fractal" :  0.028  s
+"Drawing fractal" :  1.428  s
+
+
+fir_tree.txt, gen=7, old algorithm, simple painting
+"Computing fractal" :  0.371  s
+"Drawing fractal" :  0.991  s
+"Computing fractal" :  0.363  s
+"Drawing fractal" :  0.987  s
+"Computing fractal" :  0.354  s
+"Drawing fractal" :  0.979  s
+
+fir_tree.txt, gen=7, new algorithm, simple painting
+"Computing fractal" :  0.318  s
+"Drawing fractal" :  1.108  s
+"Computing fractal" :  0.31  s
+"Drawing fractal" :  1.091  s
+"Computing fractal" :  0.313  s
+"Drawing fractal" :  1.087  s
+
+"Computing fractal" :  0.33  s
+"Drawing fractal" :  0.896  s
+"Computing fractal" :  0.333  s
+"Drawing fractal" :  0.898  s
+"Computing fractal" :  0.331  s
+"Drawing fractal" :  0.9  s
+
+fir_tree.txt, gen=7, new improved algorithm, simple painting
+"Computing fractal" :  0.139  s
+"Drawing fractal" :  0.869  s
+"Computing fractal" :  0.143  s
+"Drawing fractal" :  0.882  s
+"Computing fractal" :  0.135  s
+"Drawing fractal" :  0.872  s
+

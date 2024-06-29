@@ -12,13 +12,12 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
+    , doc_{ new Document(this) }
 {
     setMinimumSize(QSize{800, 600});
 
-    auto doc = new Document(this);
-
     auto fractalGeneratorView =
-        new FractalGeneratorView(doc->fractalGenerator());
+        new FractalGeneratorView(doc_->fractalGenerator());
 
     auto mainSplitter = new QSplitter;
 
@@ -34,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     mainSplitter->addWidget(toolSplitter);
 
-    auto fractalView = new FractalView{ doc->fractalGenerator() };
+    auto fractalView = new FractalView{ doc_->fractalGenerator() };
     mainSplitter->addWidget(fractalView);
 
     controlsDialog->setGenerations(fractalView->generations());
@@ -94,6 +93,13 @@ MainWindow::MainWindow(QWidget *parent)
         fractalView,
         &FractalView::setApproxAlgorithmMaxVertexCount);
 
+    controlsDialog->setAdjustScale(fractalView->adjustScale());
+    connect(
+        controlsDialog,
+        &ControlsDialog::adjustScaleEdited,
+        fractalView,
+        &FractalView::setAdjustScale);
+
     controlsDialog->disablePoint();
     connect(
         controlsDialog,
@@ -124,18 +130,21 @@ MainWindow::MainWindow(QWidget *parent)
     auto* fileMenu = menu->addMenu("&File");
 
     auto* newAction = fileMenu->addAction("&New", QKeySequence::New);
-    connect(newAction, &QAction::triggered, doc, &Document::newDocument);
+    connect(newAction, &QAction::triggered, doc_, &Document::newDocument);
 
     auto* openAction = fileMenu->addAction("&Open...", QKeySequence::Open);
-    connect(openAction, &QAction::triggered, doc, qOverload<>(&Document::open));
+    connect(openAction, &QAction::triggered,
+            doc_, qOverload<>(&Document::open));
 
     auto* saveAction = fileMenu->addAction("&Save", QKeySequence::Save);
-    connect(saveAction, &QAction::triggered, doc, qOverload<>(&Document::save));
+    connect(saveAction, &QAction::triggered,
+            doc_, qOverload<>(&Document::save));
 
     auto* saveAsAction =
         fileMenu->addAction("Save &As...", QKeySequence::SaveAs);
     connect(
-        saveAsAction, &QAction::triggered, doc, qOverload<>(&Document::saveAs));
+        saveAsAction, &QAction::triggered,
+        doc_, qOverload<>(&Document::saveAs));
 
     fileMenu->addSeparator();
     auto* quitAction = fileMenu->addAction("&Quit", QKeySequence::Quit);
@@ -143,4 +152,6 @@ MainWindow::MainWindow(QWidget *parent)
     setMenuBar(menu);
 }
 
-MainWindow::~MainWindow() {}
+auto MainWindow::open(const QString& fileName)
+    -> void
+{ doc_->open(fileName); }

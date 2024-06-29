@@ -3,12 +3,20 @@
 
 #include <QMainWindow>
 
+class Document;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
     MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+
+public slots:
+    auto open(const QString& fileName)
+        -> void;
+
+private:
+    Document* doc_;
 };
 #endif // MAINWINDOW_H

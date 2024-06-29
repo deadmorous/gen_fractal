@@ -29,15 +29,41 @@
    </item>
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="2" column="1">
-      <widget class="QCheckBox" name="checkPen">
+     <item row="8" column="0">
+      <widget class="QLabel" name="label_approx_max_vertices">
        <property name="text">
-        <string/>
+        <string>Approx max &amp;vertices</string>
+       </property>
+       <property name="buddy">
+        <cstring>spinApproxMaxVertices</cstring>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
-      <widget class="QCheckBox" name="checkAllGen">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_generations">
+       <property name="text">
+        <string>&amp;Generations</string>
+       </property>
+       <property name="buddy">
+        <cstring>generations</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="QSpinBox" name="spinApproxMaxVertices">
+       <property name="minimum">
+        <number>100</number>
+       </property>
+       <property name="maximum">
+        <number>10000000</number>
+       </property>
+       <property name="singleStep">
+        <number>1000000</number>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QCheckBox" name="checkPen">
        <property name="text">
         <string/>
        </property>
@@ -53,16 +79,6 @@
        </property>
       </widget>
      </item>
-     <item row="7" column="0">
-      <widget class="QLabel" name="label_approx_maxx_gen">
-       <property name="text">
-        <string>Approx &amp;max generatoin</string>
-       </property>
-       <property name="buddy">
-        <cstring>spinApproxMaxGen</cstring>
-       </property>
-      </widget>
-     </item>
      <item row="6" column="0">
       <widget class="QLabel" name="label_approx_bbox_gen">
        <property name="text">
@@ -73,27 +89,13 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QCheckBox" name="checkAntialiasing">
-       <property name="text">
-        <string/>
+     <item row="7" column="1">
+      <widget class="QSpinBox" name="spinApproxMaxGen">
+       <property name="minimum">
+        <number>1</number>
        </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="label_pen">
-       <property name="text">
-        <string>Fancy &amp;pen</string>
-       </property>
-       <property name="buddy">
-        <cstring>checkPen</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QSpinBox" name="generations">
        <property name="maximum">
-        <number>10</number>
+        <number>100</number>
        </property>
       </widget>
      </item>
@@ -107,45 +109,32 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_all_gen">
+     <item row="0" column="1">
+      <widget class="QSpinBox" name="generations">
+       <property name="maximum">
+        <number>10</number>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_pen">
        <property name="text">
-        <string>A&amp;ll generations</string>
+        <string>Fancy &amp;pen</string>
        </property>
        <property name="buddy">
-        <cstring>checkAllGen</cstring>
+        <cstring>checkPen</cstring>
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label_generations">
+     <item row="1" column="1">
+      <widget class="QCheckBox" name="checkAntialiasing">
        <property name="text">
-        <string>&amp;Generations</string>
-       </property>
-       <property name="buddy">
-        <cstring>generations</cstring>
+        <string/>
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
-      <widget class="Line" name="line">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="8" column="0">
-      <widget class="QLabel" name="label_approx_max_vertices">
-       <property name="text">
-        <string>Approx max &amp;vertices</string>
-       </property>
-       <property name="buddy">
-        <cstring>spinApproxMaxVertices</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QCheckBox" name="checkApprox">
+     <item row="3" column="1">
+      <widget class="QCheckBox" name="checkAllGen">
        <property name="text">
         <string/>
        </property>
@@ -161,26 +150,70 @@
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
-      <widget class="QSpinBox" name="spinApproxMaxGen">
-       <property name="minimum">
-        <number>1</number>
+     <item row="7" column="0">
+      <widget class="QLabel" name="label_approx_maxx_gen">
+       <property name="text">
+        <string>Approx &amp;max generatoin</string>
        </property>
-       <property name="maximum">
-        <number>100</number>
+       <property name="buddy">
+        <cstring>spinApproxMaxGen</cstring>
        </property>
       </widget>
      </item>
-     <item row="8" column="1">
-      <widget class="QSpinBox" name="spinApproxMaxVertices">
-       <property name="minimum">
-        <number>100</number>
+     <item row="10" column="0">
+      <widget class="QLabel" name="label_adjustScale">
+       <property name="text">
+        <string>Adjust scal&amp;e</string>
        </property>
-       <property name="maximum">
-        <number>10000000</number>
+       <property name="buddy">
+        <cstring>spinAdjustScale</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="1">
+      <widget class="QDoubleSpinBox" name="spinAdjustScale">
+       <property name="decimals">
+        <number>1</number>
+       </property>
+       <property name="minimum">
+        <double>1.000000000000000</double>
        </property>
        <property name="singleStep">
-        <number>1000000</number>
+        <double>0.200000000000000</double>
+       </property>
+       <property name="value">
+        <double>1.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QCheckBox" name="checkApprox">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_all_gen">
+       <property name="text">
+        <string>A&amp;ll generations</string>
+       </property>
+       <property name="buddy">
+        <cstring>checkAllGen</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="Line" name="line">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <widget class="Line" name="line_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -262,6 +295,7 @@
   <tabstop>spinApproxBboxGen</tabstop>
   <tabstop>spinApproxMaxGen</tabstop>
   <tabstop>spinApproxMaxVertices</tabstop>
+  <tabstop>spinAdjustScale</tabstop>
   <tabstop>edit_x</tabstop>
   <tabstop>edit_y</tabstop>
  </tabstops>

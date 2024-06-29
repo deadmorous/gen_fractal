@@ -33,6 +33,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         document.h document.cpp
         scoped_true.hpp
         fractal_iter.hpp
+        fractalview_param.h
+        render_fractal.hpp
+        render_fractal.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET gen_fractal APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

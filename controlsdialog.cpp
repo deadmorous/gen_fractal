@@ -68,6 +68,9 @@ void ControlsDialog::setApproxMaxGen(size_t maxGen)
 void ControlsDialog::setApproxMaxVertices(size_t maxVertices)
 { ui->spinApproxMaxVertices->setValue(maxVertices); }
 
+void ControlsDialog::setAdjustScale(double adjustScale)
+{ ui->spinAdjustScale->setValue(adjustScale); }
+
 void ControlsDialog::emitPointCoordsEdited()
 {
     if (settingPointCoords_)
@@ -100,3 +103,7 @@ void ControlsDialog::on_spinApproxMaxGen_valueChanged(int arg1)
 
 void ControlsDialog::on_spinApproxMaxVertices_valueChanged(int arg1)
 { emit approxMaxVerticesEdited(arg1); }
+
+void ControlsDialog::on_spinAdjustScale_valueChanged(double arg1)
+{ emit adjustScaleEdited(arg1); }
+

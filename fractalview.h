@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fractalgenerator.h"
+#include "fractalview_param.h"
 
 #include <QWidget>
 
@@ -20,6 +21,9 @@ public:
     auto approxAlgorithmBboxGen() const noexcept -> size_t;
     auto approxAlgorithmMaxGen() const noexcept -> size_t;
     auto approxAlgorithmMaxVertexCount() const noexcept -> size_t;
+    auto adjustScale() const noexcept -> double;
+
+    auto param() const noexcept -> const FractalViewParam&;
 
 public slots:
     auto setGenerations(size_t generations) -> void;
@@ -30,6 +34,9 @@ public slots:
     auto setApproxAlgorithmBboxGen(size_t bboxGen) -> void;
     auto setApproxAlgorithmMaxGen(size_t maxGen) -> void;
     auto setApproxAlgorithmMaxVertexCount(size_t maxVertexCount) -> void;
+    auto setAdjustScale(double adjustScale) -> void;
+
+    auto setParam(const FractalViewParam&) -> void;
 
 protected:
     auto paintEvent(QPaintEvent *event)
@@ -42,13 +49,5 @@ signals:
 private:
 
     FractalGeneratorObject* fractalGenerator_;
-    size_t generations_{5};
-    bool antialiasing_{true};
-    bool fancyPen_{true};
-    bool allGenerations_{true};
-
-    bool approxAlgorithm_{false};
-    size_t approxAlgorithmBboxGen_{5};
-    size_t approxAlgorithmMaxGen_{30};
-    size_t approxAlgorithmMaxVertexCount_{10'000'000};
+    FractalViewParam param_;
 };

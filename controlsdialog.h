@@ -25,6 +25,7 @@ signals:
     void approxBboxGenEdited(size_t bboxGen);
     void approxMaxGenEdited(size_t maxGen);
     void approxMaxVerticesEdited(size_t maxVertices);
+    void adjustScaleEdited(double adjustScale);
 
 public slots:
     void setPointCoords(double x, double y);
@@ -37,6 +38,7 @@ public slots:
     void setApproxBboxGen(size_t bboxGen);
     void setApproxMaxGen(size_t maxGen);
     void setApproxMaxVertices(size_t maxVertices);
+    void setAdjustScale(double adjustScale);
 
 private slots:
     void on_generations_valueChanged(int arg1);
@@ -47,12 +49,10 @@ private slots:
     void on_checkPen_stateChanged(int arg1);
     void on_checkAllGen_stateChanged(int arg1);
     void on_checkApprox_stateChanged(int arg1);
-
     void on_spinApproxBboxGen_valueChanged(int arg1);
-
     void on_spinApproxMaxGen_valueChanged(int arg1);
-
     void on_spinApproxMaxVertices_valueChanged(int arg1);
+    void on_spinAdjustScale_valueChanged(double arg1);
 
 private:
     void emitPointCoordsEdited();

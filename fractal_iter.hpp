@@ -26,8 +26,8 @@ inline auto generatorTransform(const Vec2d& b0,
     auto ig2 = 1. / (g * g);
     auto fc = (b * g) * ig2;
     auto fs = (b % g) * ig2;
-    auto dx = b0[0] - fc*g0[0] + fs*g0[1];
-    auto dy = b0[1] - fs*g0[0] - fc*g0[1];
+    auto dx = b0[0] - fc*g0[0] - fs*g0[1];
+    auto dy = b0[1] + fs*g0[0] - fc*g0[1];
     return QTransform{ fc, -fs, fs, fc, dx, dy };
 }
 

@@ -5,6 +5,8 @@
 
 #include <QWidget>
 
+#include <fstream>
+
 class FractalView : public QWidget
 {
     Q_OBJECT
@@ -38,6 +40,8 @@ public slots:
 
     auto setParam(const FractalViewParam&) -> void;
 
+    auto logState() -> void;
+
 protected:
     auto paintEvent(QPaintEvent *event)
         -> void override;
@@ -50,4 +54,5 @@ private:
 
     FractalGeneratorObject* fractalGenerator_;
     FractalViewParam param_;
+    std::ofstream log_;
 };

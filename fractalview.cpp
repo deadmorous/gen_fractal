@@ -2,15 +2,13 @@
 
 #include "render_fractal.hpp"
 
-// #include "bbox2.hpp"
-// #include "fractal_iter.hpp"
-// #include "vec2_qt.hpp"
-
+#include <QMessageBox>
 #include <QPainter>
-#include <QPainterPath>
 
-#include <chrono>
+#include <filesystem>
 #include <sstream>
+
+using namespace std::string_literals;
 
 namespace {
 
@@ -152,4 +150,77 @@ auto FractalView::setParam(const FractalViewParam& param)
 {
     param_ = param;
     update();
+}
+
+auto FractalView::logState() -> void
+{
+    namespace fs = std::filesystem;
+    static const auto fileName = "gen_fractal.log"s;
+
+    if (!log_.is_open())
+    {
+        auto filePath =
+            fs::absolute(fileName);
+
+        if (fs::exists(fileName))
+        {
+            std::ostringstream s;
+            s << "Log file " << filePath << " exists. Overwrite?";
+            auto result =
+                QMessageBox::question(
+                this, QString(), QString::fromStdString(s.str()));
+            if (result != QMessageBox::Yes)
+                return;
+        }
+
+        log_.open(filePath);
+        if (log_.is_open())
+        {
+            std::ostringstream s;
+            s << "Logging this and any further states to file "
+              << filePath;
+            QMessageBox::information(
+                this, QString(),
+                QString::fromStdString(s.str()));
+        }
+
+        else
+        {
+            std::ostringstream s;
+            s << "Unable to open output file "
+              << filePath;
+            QMessageBox::critical(
+                this, QString(),
+                QString::fromStdString(s.str()));
+            return;
+        }
+
+        log_ << "base_x#,base_y#...,*,gen_x#,gen_y#...,*";
+        for (auto name : fractalViewParamFieldNames())
+            log_ << ',' << name;
+        log_ << ",width,height\n";
+    }
+
+    auto log2dline = [&](std::span<const Vec2d> line)
+    {
+        for (auto& v: line)
+            log_ << v[0] << ',' << v[1] << ',';
+        log_ << '*';
+    };
+
+    auto base = std::vector<Vec2d>{ {0., 0.}, {1., 0.} };
+    log2dline( base );
+    log_ << ',';
+    log2dline( fractalGenerator_->fractalGenerator() );
+
+    auto paramTuple = fields_of(param_);
+    [&]<size_t... I>(std::index_sequence<I...>)
+    {
+        ((log_ << ',' << std::get<I>(paramTuple)), ...);
+    }(std::make_index_sequence<std::tuple_size_v<decltype(paramTuple)>>());
+
+    auto rc = rect();
+    log_ << ',' << rc.width() << ',' << rc.height();
+
+    log_ << std::endl;
 }

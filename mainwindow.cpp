@@ -147,6 +147,14 @@ MainWindow::MainWindow(QWidget *parent)
         doc_, qOverload<>(&Document::saveAs));
 
     fileMenu->addSeparator();
+
+    auto* logStateAction = fileMenu->addAction(
+        "&Log state", QKeyCombination(Qt::CTRL, Qt::Key_P));
+    connect(logStateAction, &QAction::triggered,
+            fractalView, &FractalView::logState);
+
+    fileMenu->addSeparator();
+
     auto* quitAction = fileMenu->addAction("&Quit", QKeySequence::Quit);
     connect(quitAction, &QAction::triggered, this, &QWidget::close);
     setMenuBar(menu);

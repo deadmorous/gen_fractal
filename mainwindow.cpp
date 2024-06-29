@@ -6,6 +6,7 @@
 #include "fractalgeneratorview.h"
 
 #include <QGraphicsView>
+#include <QLabel>
 #include <QMenuBar>
 #include <QSplitter>
 
@@ -27,6 +28,10 @@ MainWindow::MainWindow(QWidget *parent)
     auto controlsDialog = new ControlsDialog;
     toolSplitter->addWidget(controlsDialog);
 
+    auto statusWidget = new QLabel(tr("Rendering status"));
+    statusWidget->setMinimumHeight(200);
+    toolSplitter->addWidget(statusWidget);
+
     mainSplitter->addWidget(toolSplitter);
 
     auto fractalView = new FractalView{ doc->fractalGenerator() };
@@ -46,12 +51,12 @@ MainWindow::MainWindow(QWidget *parent)
         fractalView,
         &FractalView::setAntialiasing);
 
-    controlsDialog->setAdvancedPen(fractalView->advancedPen());
+    controlsDialog->setFancyPen(fractalView->fancyPen());
     connect(
         controlsDialog,
-        &ControlsDialog::advancedPenChanged,
+        &ControlsDialog::fancyPenChanged,
         fractalView,
-        &FractalView::setAdvancedPen);
+        &FractalView::setFancyPen);
 
     controlsDialog->setAllGenerations(fractalView->allGenerations());
     connect(
@@ -59,6 +64,35 @@ MainWindow::MainWindow(QWidget *parent)
         &ControlsDialog::allGenerationsChanged,
         fractalView,
         &FractalView::setAllGenerations);
+
+    controlsDialog->setApproxAlgorithm(fractalView->approxAlgorithm());
+    connect(
+        controlsDialog,
+        &ControlsDialog::approxAlgorithmChanged,
+        fractalView,
+        &FractalView::setApproxAlgorithm);
+
+    controlsDialog->setApproxBboxGen(fractalView->approxAlgorithmBboxGen());
+    connect(
+        controlsDialog,
+        &ControlsDialog::approxBboxGenEdited,
+        fractalView,
+        &FractalView::setApproxAlgorithmBboxGen);
+
+    controlsDialog->setApproxMaxGen(fractalView->approxAlgorithmMaxGen());
+    connect(
+        controlsDialog,
+        &ControlsDialog::approxMaxGenEdited,
+        fractalView,
+        &FractalView::setApproxAlgorithmMaxGen);
+
+    controlsDialog->setApproxMaxVertices(
+        fractalView->approxAlgorithmMaxVertexCount());
+    connect(
+        controlsDialog,
+        &ControlsDialog::approxMaxVerticesEdited,
+        fractalView,
+        &FractalView::setApproxAlgorithmMaxVertexCount);
 
     controlsDialog->disablePoint();
     connect(
@@ -76,6 +110,12 @@ MainWindow::MainWindow(QWidget *parent)
         &FractalGeneratorView::pointSelected,
         controlsDialog,
         &ControlsDialog::setPointCoords);
+
+    connect(
+        fractalView,
+        &FractalView::renderingStatus,
+        statusWidget,
+        &QLabel::setText);
 
     setCentralWidget(mainSplitter);
 

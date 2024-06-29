@@ -74,6 +74,10 @@ public:
     friend bool operator!= (const Self& a, const Self& b)
     { return !a.impl_.equal(b.impl_); }
 
+    auto impl() const noexcept
+        -> const Impl&
+    { return impl_; }
+
 private:
     Impl impl_;
 };
@@ -114,7 +118,7 @@ public:
         assert(!is_end_);
         ++ordinal_;
 
-        if (is_last_)
+        if (isLast_)
         {
             is_end_ = true;
             return;
@@ -124,7 +128,7 @@ public:
         for (; gen!=~0ul; --gen)
         {
             auto& st = state_[gen];
-            if (!st.is_last())
+            if (!st.isLast())
             {
                 st.next();
                 for(; gen<generation_; ++gen)
@@ -135,7 +139,7 @@ public:
         }
 
         value_ = state_.front().v1;
-        is_last_ = true;
+        isLast_ = true;
     }
 
     auto equal(const FractalNGen& that) const noexcept
@@ -149,6 +153,12 @@ public:
         return ordinal_ == that.ordinal_;
     }
 
+    // ---
+
+    auto actualMaxGen() const noexcept
+        -> size_t
+    { return generation_; }
+
 private:
     struct GenerationState final
     {
@@ -158,14 +168,14 @@ private:
         Vec2d v1;
         QTransform transform;
 
-        auto is_last() const noexcept
+        auto isLast() const noexcept
             -> bool
         { return begin + 1 == end; }
 
         auto next() noexcept
             -> void
         {
-            assert(!is_last());
+            assert(!isLast());
             v0 = v1;
             ++begin;
             if (begin != end)
@@ -189,12 +199,6 @@ private:
     auto recurseState(const GenerationState& state) const
         -> GenerationState
     {
-        // deBUG, TODO: Remove
-        [[maybe_unused]]
-        auto gsize = generator_.size();
-        [[maybe_unused]]
-        auto bsize = base_.size();
-
         auto t = detail::generatorTransform(
             state.v0, state.v1, generator_.front(), generator_.back());
         return {
@@ -210,7 +214,7 @@ private:
     std::span<const Vec2d> generator_;
     size_t generation_{};
     size_t ordinal_{};
-    bool is_last_{ false };
+    bool isLast_{ false };
     bool is_end_{ false };
 
     Vec2d value_;
@@ -218,8 +222,195 @@ private:
     std::vector<GenerationState> state_;
 };
 
+struct FractalApproxParam final
+{
+    size_t maxGen{ 30 };
+    size_t maxOrdinal{ 10'000'000 };
+    double minLength{ 1 };
+};
+
+class FractalApprox final
+{
+public:
+
+    FractalApprox(std::span<const Vec2d> base,
+                std::span<const Vec2d> generator,
+                const FractalApproxParam& param):
+        base_{ base },
+        generator_{ generator },
+        baseLen_( lengths(base) ),
+        genLen_( lengths(generator) ),
+        genDist_{ (generator.back() - generator.front()).norm() },
+        param_{ param },
+        value_{ base.front() }
+    {
+        assert(base_.size() > 1);
+        assert(generator_.size() > 1);
+        state_.reserve(param_.maxGen + 1);
+
+        state_.push_back(baseState());
+        maybeRecurse();
+    }
+
+    FractalApprox(detail::EndIterTag):
+        is_end_{ true }
+    {}
+
+    auto deref() const noexcept
+        -> const Vec2d&
+    { return value_; }
+
+    auto inc() noexcept
+        -> void
+    {
+        assert(!is_end_);
+        ++ordinal_;
+
+        if (isLast_)
+        {
+            is_end_ = true;
+            return;
+        }
+
+        if (ordinal_ < param_.maxOrdinal)
+            while (state_.size() > 1)
+            {
+                auto& st = state_.back();
+                if (st.isLast())
+                {
+                    state_.pop_back();
+                    continue;
+                }
+
+                st.next();
+                maybeRecurse();
+                value_ = state_.back().v0;
+                return;
+            }
+
+        value_ = state_.front().v1;
+        isLast_ = true;
+    }
+
+    auto equal(const FractalApprox& that) const noexcept
+        -> bool
+    {
+        if (is_end_ != that.is_end_)
+            return false;
+        if (is_end_)
+            return true;
+
+        return ordinal_ == that.ordinal_;
+    }
+
+    // ---
+
+    auto actualMaxGen() const noexcept
+        -> size_t
+    { return actualMaxGen_; }
+
+private:
+    struct GenerationState final
+    {
+        const Vec2d* begin;
+        const Vec2d* end;
+        const double* len;
+        Vec2d v0;
+        Vec2d v1;
+        QTransform transform;
+        double scale;
+
+        auto isLast() const noexcept
+            -> bool
+        { return begin + 1 == end; }
+
+        auto next() noexcept
+            -> void
+        {
+            assert(!isLast());
+            v0 = v1;
+            ++begin;
+            ++len;
+            if (begin != end)
+                v1 = toVec2d(transform.map(toQPointF(begin[1])));
+        }
+
+        auto length() const noexcept
+        { return scale * *len; }
+    };
+
+    auto maybeRecurse()
+        -> void
+    {
+        while (state_.size() < param_.maxGen &&
+               state_.back().length() > param_.minLength)
+            state_.push_back(recurseState(state_.back()));
+        actualMaxGen_ = std::max(actualMaxGen_, state_.size());
+    }
+
+
+    auto baseState() const
+        -> GenerationState
+    {
+        return{
+            .begin = base_.data(),
+            .end = base_.data() + base_.size() - 1,
+            .len = baseLen_.data(),
+            .v0 = base_[0],
+            .v1 = base_[1],
+            .transform = {},
+            .scale = 1
+        };
+    }
+
+    auto recurseState(const GenerationState& state) const
+        -> GenerationState
+    {
+        auto t = detail::generatorTransform(
+            state.v0, state.v1, generator_.front(), generator_.back());
+        return {
+            .begin = generator_.data(),
+            .end = generator_.data() + generator_.size() - 1,
+            .len = genLen_.data(),
+            .v0 = state.v0,
+            .v1 = toVec2d(t.map(toQPointF(generator_[1]))),
+            .transform = t,
+            .scale = state.length() / genDist_
+        };
+    }
+
+    static auto lengths(std::span<const Vec2d> v)
+        -> std::vector<double>
+    {
+        auto result = std::vector<double>{};
+        assert(!v.empty());
+        result.reserve(v.size() - 1);
+        for (size_t i=1, n=v.size(); i<n; ++i)
+            result.push_back((v[i]-v[i-1]).norm());
+        return result;
+    }
+
+    std::span<const Vec2d> base_;
+    std::span<const Vec2d> generator_;
+    std::vector<double> baseLen_;
+    std::vector<double> genLen_;
+    double genDist_;
+    FractalApproxParam param_{};
+    size_t ordinal_{};
+    bool isLast_{ false };
+    bool is_end_{ false };
+
+    Vec2d value_;
+
+    std::vector<GenerationState> state_;
+    size_t actualMaxGen_{};
+};
+
 using FractalNGenIterator =
     FractalIterator<FractalNGen>;
+
+using FractalApproxIterator =
+    FractalIterator<FractalApprox>;
 
 template <typename Iterator>
 struct Range {

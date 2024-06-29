@@ -44,17 +44,29 @@ void ControlsDialog::disablePoint()
     ui->edit_y->setValue(0);
 }
 
-void ControlsDialog::setGenerations(int generations)
+void ControlsDialog::setGenerations(size_t generations)
 { ui->generations->setValue(generations); }
 
 void ControlsDialog::setAntialiasing(bool enabled)
 { ui->checkAntialiasing->setChecked(enabled); }
 
-void ControlsDialog::setAdvancedPen(bool enabled)
+void ControlsDialog::setFancyPen(bool enabled)
 { ui->checkPen->setChecked(enabled); }
 
 void ControlsDialog::setAllGenerations(bool enabled)
 { ui->checkAllGen->setChecked(enabled); }
+
+void ControlsDialog::setApproxAlgorithm(bool enabled)
+{ ui->checkApprox->setChecked(enabled); }
+
+void ControlsDialog::setApproxBboxGen(size_t bboxGen)
+{ ui->spinApproxBboxGen->setValue(bboxGen); }
+
+void ControlsDialog::setApproxMaxGen(size_t maxGen)
+{ ui->spinApproxMaxGen->setValue(maxGen); }
+
+void ControlsDialog::setApproxMaxVertices(size_t maxVertices)
+{ ui->spinApproxMaxVertices->setValue(maxVertices); }
 
 void ControlsDialog::emitPointCoordsEdited()
 {
@@ -71,9 +83,20 @@ void ControlsDialog::emitPointCoordsEdited()
 void ControlsDialog::on_checkAntialiasing_stateChanged(int arg1)
 { emit antialiasingChanged(arg1 == Qt::Checked); }
 
-
 void ControlsDialog::on_checkPen_stateChanged(int arg1)
-{ emit advancedPenChanged(arg1 == Qt::Checked); }
+{ emit fancyPenChanged(arg1 == Qt::Checked); }
 
 void ControlsDialog::on_checkAllGen_stateChanged(int arg1)
 { emit allGenerationsChanged(arg1 == Qt::Checked); }
+
+void ControlsDialog::on_checkApprox_stateChanged(int arg1)
+{ emit approxAlgorithmChanged(arg1 == Qt::Checked); }
+
+void ControlsDialog::on_spinApproxBboxGen_valueChanged(int arg1)
+{ emit approxBboxGenEdited(arg1); }
+
+void ControlsDialog::on_spinApproxMaxGen_valueChanged(int arg1)
+{ emit approxMaxGenEdited(arg1); }
+
+void ControlsDialog::on_spinApproxMaxVertices_valueChanged(int arg1)
+{ emit approxMaxVerticesEdited(arg1); }

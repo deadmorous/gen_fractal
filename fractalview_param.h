@@ -1,5 +1,7 @@
 #pragma once
 
+#include "type.hpp"
+
 #include <array>
 #include <cstddef>
 #include <string_view>
@@ -21,7 +23,7 @@ struct FractalViewParam
     double adjustScale{1};
 };
 
-inline auto fractalViewParamFieldNames()
+inline auto field_names_of(TypeTag<FractalViewParam>)
     -> std::array<std::string_view, 9>
 {
     return {

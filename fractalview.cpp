@@ -1,5 +1,6 @@
 #include "fractalview.h"
 
+#include "anim_param.hpp"
 #include "render_fractal.hpp"
 
 #include <QMessageBox>
@@ -196,9 +197,12 @@ auto FractalView::logState() -> void
         }
 
         log_ << "base_x#,base_y#...,*,gen_x#,gen_y#...,*";
-        for (auto name : fractalViewParamFieldNames())
+        for (auto name : field_names_of(Type<FractalViewParam>))
             log_ << ',' << name;
-        log_ << ",width,height\n";
+        log_ << ",width,height";
+        for (auto name : field_names_of(Type<AnimParam>))
+            log_ << ',' << name;
+        log_ << std::endl;
     }
 
     auto log2dline = [&](std::span<const Vec2d> line)
@@ -213,14 +217,21 @@ auto FractalView::logState() -> void
     log_ << ',';
     log2dline( fractalGenerator_->fractalGenerator() );
 
-    auto paramTuple = fields_of(param_);
-    [&]<size_t... I>(std::index_sequence<I...>)
+    auto logStruct = [&](const auto& x)
     {
-        ((log_ << ',' << std::get<I>(paramTuple)), ...);
-    }(std::make_index_sequence<std::tuple_size_v<decltype(paramTuple)>>());
+        auto fields = fields_of(x);
+        [&]<size_t... I>(std::index_sequence<I...>)
+        {
+            ((log_ << ',' << std::get<I>(fields)), ...);
+        }(std::make_index_sequence<std::tuple_size_v<decltype(fields)>>());
+    };
+
+    logStruct(param_);
 
     auto rc = rect();
     log_ << ',' << rc.width() << ',' << rc.height();
+
+    logStruct(AnimParam{});
 
     log_ << std::endl;
 }

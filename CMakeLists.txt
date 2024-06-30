@@ -39,6 +39,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         batch.hpp
         batch.cpp
         throw.hpp
+        type.hpp
+        anim_param.hpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET gen_fractal APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

@@ -96,8 +96,22 @@ auto lerp2dLine(const std::vector<Vec2d>& l0,
     };
     for (size_t i=0; i<n; ++i)
     {
-        auto i0 = i * n0 / n;
-        auto i1 = i * n1 / n;
+        // NOTE
+        //      We want symmetry in the interpolated curve if we have it
+        //      in both original curves. For that to work, index mapping
+        //      needs to possess a symmetry too.
+        size_t i0, i1;
+        if (2*i < n)
+        {
+            i0 = i * n0 / n;
+            i1 = i * n1 / n;
+        }
+        else
+        {
+            auto ri = n - 1 - i;
+            i0 = n0 - 1 - ri * n0 / n;
+            i1 = n1 - 1 - ri * n1 / n;
+        }
         auto v0 = prep(l0[i0], a0);
         auto v1 = prep(l1[i1], a1);
         result.push_back(lerp(v0, v1, p));

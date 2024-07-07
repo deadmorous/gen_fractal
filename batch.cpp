@@ -1,6 +1,7 @@
 #include "batch.hpp"
 
 #include "anim_param.hpp"
+#include "interp_curves.hpp"
 #include "render_fractal.hpp"
 #include "throw.hpp"
 
@@ -96,22 +97,8 @@ auto lerp2dLine(const std::vector<Vec2d>& l0,
     };
     for (size_t i=0; i<n; ++i)
     {
-        // NOTE
-        //      We want symmetry in the interpolated curve if we have it
-        //      in both original curves. For that to work, index mapping
-        //      needs to possess a symmetry too.
-        size_t i0, i1;
-        if (2*i < n)
-        {
-            i0 = i * n0 / n;
-            i1 = i * n1 / n;
-        }
-        else
-        {
-            auto ri = n - 1 - i;
-            i0 = n0 - 1 - ri * n0 / n;
-            i1 = n1 - 1 - ri * n1 / n;
-        }
+        auto i0 = localIndex(i, n, n0);
+        auto i1 = localIndex(i, n, n1);
         auto v0 = prep(l0[i0], a0);
         auto v1 = prep(l1[i1], a1);
         result.push_back(lerp(v0, v1, p));
@@ -156,6 +143,94 @@ auto interpolateBatchLine(const BatchLine& bl0,
         .size = lerpStruct(bl0.size, bl1.size, p),
         .animParam = {}
     };
+}
+
+auto interpolateBatchLines(std::span<const BatchLine> batchLines)
+    -> std::vector<BatchLine>
+{
+    auto getBase = []( const BatchLine& batchLine )
+        -> const std::vector< Vec2d >&
+    { return batchLine.base; };
+
+    auto getGen = []( const BatchLine& batchLine )
+        -> const std::vector< Vec2d >
+    {
+        auto result = std::vector< Vec2d >( batchLine.gen );
+        for(auto& v: result)
+        {
+            if (batchLine.animParam.reflectX)
+                v[0] = -v[0];
+            if (batchLine.animParam.reflectY)
+                v[1] = -v[1];
+        }
+        return result;
+    };
+
+    auto getSubdiv = []( const BatchLine& batchLine )
+        -> size_t
+    { return batchLine.animParam.frameCountAfter; };
+
+    auto getSlopeF = []( const BatchLine& batchLine )
+        -> double
+    { return batchLine.animParam.slopeFactor; };
+
+    auto baseCurves =
+        interpCurves(batchLines, getBase, getSubdiv, getSlopeF);
+
+    auto genCurves =
+        interpCurves(batchLines, getGen, getSubdiv, getSlopeF);
+
+    auto result = std::vector<BatchLine>{};
+
+    auto curvesAtFrame =
+        [](const std::vector<std::vector<Vec2d>>& curves, size_t iframe)
+            -> std::vector<Vec2d>
+    {
+        auto ncurves = curves.size();
+        auto result = std::vector<Vec2d>(ncurves);
+        for (auto icurve=0; icurve<ncurves; ++icurve)
+            result[icurve] = curves[icurve][iframe];
+        return result;
+    };
+
+    result.push_back(batchLines.front());
+    size_t iframe = 1;
+    auto nframes = baseCurves.front().size();
+    for (size_t iline=0, nlines=batchLines.size(); iline+1<nlines; ++iline)
+    {
+        const auto& bl0 = batchLines[iline];
+        const auto& bl1 = batchLines[iline+1];
+        auto subdiv = getSubdiv(bl0);
+        auto h = 1. / subdiv;
+        for (size_t isub=0; isub<subdiv; ++isub, ++iframe)
+        {
+            auto p = (isub+1) * h;
+            result.push_back(
+                {
+                    .base = curvesAtFrame(baseCurves, iframe),
+                    .gen = curvesAtFrame(genCurves, iframe),
+                    .viewParam = lerpStruct(bl0.viewParam, bl1.viewParam, p),
+                    .size = lerpStruct(bl0.size, bl1.size, p),
+                    .animParam = {}
+                });
+        }
+    }
+    assert(iframe == nframes);
+
+    // deBUG: Print interpolated generator curves
+    // auto ncurves = result[0].gen.size();
+    // for (iframe=0; iframe<nframes; ++iframe)
+    // {
+    //     std::cout << iframe;
+    //     for (size_t icurve=0; icurve<ncurves; ++icurve)
+    //     {
+    //         const auto& v = result[iframe].gen[icurve];
+    //         std::cout << '\t' << v[0] << '\t' << v[1];
+    //     }
+    //     std::cout << std::endl;
+    // }
+
+    return result;
 }
 
 } // anonymous namespace
@@ -287,27 +362,20 @@ auto batch(const QString& batchFileName)
         std::cout << "Generating images in directory '" << outputDirName << "'"
                   << std::endl;
 
-        size_t frameCount = 0;
-        for (size_t iLine=0, nLines=batchLines.size(); iLine<nLines; ++iLine)
+        size_t iframe = 0;
+        for (auto& interpolatedLine: interpolateBatchLines(batchLines))
         {
-            const auto& bl = batchLines[iLine];
-            if (iLine > 0)
-            {
-                auto blPrev = batchLines[iLine-1];
-                auto midFrames = blPrev.animParam.frameCountAfter;
-                for (size_t iFrame=0; iFrame<midFrames; ++iFrame)
-                {
-                    auto param = static_cast<double>(iFrame+1) / (midFrames+1);
-                    auto blInter = interpolateBatchLine(blPrev, bl, param);
-                    renderFractalImage(blInter.base,
-                                       blInter.gen,
-                                       blInter.viewParam,
-                                       blInter.size)
-                        .save(outputFileName(++frameCount));
-                }
-            }
-            renderFractalImage(bl.base, bl.gen, bl.viewParam, bl.size)
-                .save(outputFileName(++frameCount));
+            auto size = interpolatedLine.size;
+
+            // Make image width and height even, because ffmpeg may want it
+            size.rwidth() &= ~1;
+            size.rheight() &= ~1;
+
+            renderFractalImage(interpolatedLine.base,
+                               interpolatedLine.gen,
+                               interpolatedLine.viewParam,
+                               size)
+                .save(outputFileName(++iframe));
         }
 
         return EXIT_SUCCESS;

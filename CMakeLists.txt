@@ -42,6 +42,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         type.hpp
         anim_param.hpp
         cubic.hpp
+        interp_curves.hpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET gen_fractal APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -89,3 +90,7 @@ if(QT_VERSION_MAJOR EQUAL 6)
 endif()
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY COMPILE_WARNING_AS_ERROR ON)
+
+
+
+add_executable(test_cubic test_cubic.cpp)

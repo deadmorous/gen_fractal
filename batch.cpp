@@ -69,43 +69,6 @@ auto lerp(bool x0, bool x1, double p)
     -> bool
 { return lerp(x0? 1.: 0., x1? 1.:0, p) >= 0.5; }
 
-auto lerp(const Vec2d& x0, const Vec2d& x1, double p)
-    -> Vec2d
-{ return { lerp(x0[0], x1[0], p), lerp(x0[1], x1[1], p) }; }
-
-auto lerp2dLine(const std::vector<Vec2d>& l0,
-                const std::vector<Vec2d>& l1,
-                const AnimParam& a0,
-                const AnimParam& a1,
-                double p)
-    -> std::vector<Vec2d>
-{
-    size_t n0 = l0.size();
-    size_t n1 = l1.size();
-    auto n = std::max(n0, n1);
-    auto result = std::vector<Vec2d>{};
-    result.reserve(n);
-    constexpr auto prep = +[](const Vec2d& v, const AnimParam& a)
-        -> Vec2d
-    {
-        auto result = v;
-        if (a.reflectX)
-            result[0] = -result[0];
-        if (a.reflectY)
-            result[1] = -result[1];
-        return result;
-    };
-    for (size_t i=0; i<n; ++i)
-    {
-        auto i0 = localIndex(i, n, n0);
-        auto i1 = localIndex(i, n, n1);
-        auto v0 = prep(l0[i0], a0);
-        auto v1 = prep(l1[i1], a1);
-        result.push_back(lerp(v0, v1, p));
-    }
-    return result;
-}
-
 template <typename T>
 auto lerpStruct(const T& x0, const T& x1, double p)
     -> T
@@ -122,28 +85,6 @@ auto lerpStruct(const T& x0, const T& x1, double p)
     return result;
 }
 
-
-auto interpolateBatchLine(const BatchLine& bl0,
-                          const BatchLine& bl1,
-                          double param)
-    -> BatchLine
-{
-    auto p = param*param*(3 - 2*param);
-
-    return {
-        .base = lerp2dLine(
-            bl0.base, bl1.base,
-            {}, {},
-            p),
-        .gen = lerp2dLine(
-            bl0.gen, bl1.gen,
-            bl0.animParam, bl1.animParam,
-            p),
-        .viewParam = lerpStruct(bl0.viewParam, bl1.viewParam, p),
-        .size = lerpStruct(bl0.size, bl1.size, p),
-        .animParam = {}
-    };
-}
 
 auto interpolateBatchLines(std::span<const BatchLine> batchLines)
     -> std::vector<BatchLine>

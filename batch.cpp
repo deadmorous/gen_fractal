@@ -8,6 +8,7 @@
 #include <QImage>
 #include <QPainter>
 
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <filesystem>
@@ -59,11 +60,11 @@ auto lerp(double x0, double x1, double p)
 
 auto lerp(size_t x0, size_t x1, double p)
     -> size_t
-{ return static_cast<size_t>(x0*(1-p) + x1*p); }
+{ return std::lround(x0*(1-p) + x1*p); }
 
 auto lerp(int x0, int x1, double p)
     -> int
-{ return static_cast<int>(x0*(1-p) + x1*p); }
+{ return std::lround(x0*(1-p) + x1*p); }
 
 auto lerp(bool x0, bool x1, double p)
     -> bool
@@ -123,7 +124,7 @@ auto lerpStruct(const T& x0, const T& x1, double p)
 }
 
 
-auto interpolateBatchLine(const BatchLine& bl0,
+auto lerpBatchLine(const BatchLine& bl0,
                           const BatchLine& bl1,
                           double param)
     -> BatchLine

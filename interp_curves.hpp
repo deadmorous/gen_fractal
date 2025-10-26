@@ -2,6 +2,7 @@
 
 #include "cubic.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cstdlib>
 #include <ranges>
